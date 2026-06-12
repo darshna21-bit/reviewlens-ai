@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}ReviewLens AI — Amazon Review Intelligence{% endblock %}
+
+{% block content %}
+<header class="site-header">
+  <div class="header-inner">
+    <div class="logo-mark">
+      <div class="logo-icon">
+        <span class="logo-dot"></span>
+        <span class="logo-dot"></span>
+        <span class="logo-dot"></span>
+      </div>
+      <span class="logo-text">ReviewLens <span class="logo-ai">AI</span></span>
+    </div>
+    <div class="header-status">
+      <span class="status-dot" id="statusDot"></span>
+      <span class="status-label" id="statusLabel">checking models...</span>
+    </div>
+  </div>
+</header>
+
+<main class="main-content">
+  <section class="hero">
+    <div class="hero-eyebrow">NLP · DistilBERT + T5-small</div>
+    <h1 class="hero-title">
+      Decode what customers<br />
+      <span class="hero-accent">really mean.</span>
+    </h1>
+    <p class="hero-sub">
+      Fine-tuned transformer models analyze sentiment and distill lengthy reviews
+      into their essential insight — in under a second.
+    </p>
+  </section>
+
+  <section class="analyzer-section">
+    <div class="analyzer-card">
+      <div class="input-area">
+        <label class="input-label" for="reviewInput">
+          Paste an Amazon review
+          <span class="char-count" id="charCount">0 / 2000</span>
+        </label>
+        <textarea
+          id="reviewInput"
+          class="review-textarea"
+          placeholder="e.g. I bought this headset expecting great things based on the reviews but was disappointed right out of the box. The build quality feels cheap for the price point and the audio cuts out intermittently during calls..."
+          maxlength="2000"
+          spellcheck="false"
+        ></textarea>
+        <div class="input-actions">
+          <button class="btn-secondary" id="clearBtn" type="button">Clear</button>
+          <button class="btn-primary" id="analyzeBtn" type="button">
+            <span class="btn-text">Analyze Review</span>
+            <span class="btn-arrow">→</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div class="loading-panel" id="loadingPanel" hidden>
+      <div class="loading-inner">
+        <div class="loading-bars">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <p class="loading-text">Running inference<span class="loading-dots"></span></p>
+      </div>
+    </div>
+
+    <!-- Error state -->
+    <div class="error-panel" id="errorPanel" hidden>
+      <div class="error-icon">⚠</div>
+      <p class="error-message" id="errorMessage">Something went wrong.</p>
+    </div>
+
+    <!-- Results -->
+    <div class="results-panel" id="resultsPanel" hidden>
+
+      <!-- Sentiment card -->
+      <div class="result-card" id="sentimentCard">
+        <div class="result-card-header">
+          <span class="result-card-label">Sentiment</span>
+          <div class="sentiment-badge" id="sentimentBadge">—</div>
+        </div>
+        <div class="confidence-section">
+          <p class="confidence-heading">Confidence scores</p>
+          <div class="confidence-bars" id="confidenceBars">
+            <!-- populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary card -->
+      <div class="result-card" id="summaryCard">
+        <div class="result-card-header">
+          <span class="result-card-label">Summary</span>
+          <span class="model-tag">T5-small</span>
+        </div>
+        <p class="summary-text" id="summaryText">—</p>
+        <div class="summary-meta" id="summaryMeta"></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Example reviews for quick testing -->
+  <section class="examples-section">
+    <p class="examples-label">Try an example</p>
+    <div class="examples-grid" id="examplesGrid">
+      <button class="example-chip" data-review="I've had this coffee maker for three months now and it's completely changed my mornings. The brew is consistently hot, the carafe keeps it warm without burning, and the timer means I wake up to fresh coffee every day. Build quality feels solid — much better than the previous one I had. Highly recommend to anyone serious about their morning routine.">
+        ☕ Positive review
+      </button>
+      <button class="example-chip" data-review="The product arrived on time and is exactly as described. It does the job it's supposed to do. Nothing about it blew me away but nothing disappointed me either. It's fine. I'd probably buy it again if I needed another one, though I might also look at alternatives first.">
+        😐 Neutral review
+      </button>
+      <button class="example-chip" data-review="Total waste of money. The item broke after two weeks of normal use and customer service was completely useless when I tried to get a replacement. The packaging looked nice but the actual product feels like it was made from the cheapest possible materials. Save yourself the headache and buy from a reputable brand.">
+        👎 Negative review
+      </button>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <span>ReviewLens AI — Built with DistilBERT &amp; T5-small</span>
+    <span class="footer-sep">·</span>
+    <a href="https://github.com" target="_blank" rel="noopener" class="footer-link">GitHub</a>
+    <span class="footer-sep">·</span>
+    <a href="/api/health" class="footer-link">API Health</a>
+  </div>
+</footer>
+{% endblock %}

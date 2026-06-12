@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: reviewlens-ai
+    runtime: docker
+    dockerfilePath: ./deployment/Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_SECRET_KEY
+        generateValue: true
+      - key: SENTIMENT_MODEL_PATH
+        value: saved_models/sentiment
+      - key: SUMMARIZATION_MODEL_PATH
+        value: saved_models/summarization
+      - key: MAX_INPUT_LENGTH
+        value: "512"
+      - key: LOG_LEVEL
+        value: WARNING
+      - key: WEB_CONCURRENCY
+        value: "2"
+    healthCheckPath: /api/health
+    # Render free tier spins down after 15min of inactivity — the first
+    # request after spin-down will be slow (30-60s) as models reload.
+    # Upgrading to a paid plan removes spin-down.

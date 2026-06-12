@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env
+
+# Keep .env.example in git but never the real .env
+.env
+!.env.example
+
+# Model weights — too large for GitHub (use Git LFS or just retrain)
+saved_models/
+*.bin
+*.safetensors
+*.pt
+*.ckpt
+
+# Training artifacts
+training/sentiment/results/
+training/summarization/results/
+
+# Data
+data/raw/
+data/processed/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Jupyter (if you did EDA in notebooks)
+.ipynb_checkpoints/
+*.ipynb
