@@ -55,4 +55,3 @@ htmlcov/
 
 # Jupyter (if you did EDA in notebooks)
 .ipynb_checkpoints/
-*.ipynb
