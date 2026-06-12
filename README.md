@@ -1,3 +1,12 @@
+---
+title: ReviewLens AI
+emoji: 🔍
+colorFrom: green
+colorTo: black
+sdk: docker
+pinned: false
+---
+
 # ReviewLens AI — Amazon Review Intelligence Platform
 
 **An end-to-end NLP system that fine-tunes DistilBERT for sentiment classification and T5-small for abstractive summarization on real Amazon product reviews.**
@@ -50,9 +59,11 @@ reviewlens-ai/
 ## Dataset
 
 This project uses the **Amazon Customer Reviews Dataset** available on Kaggle:
+
 > https://www.kaggle.com/datasets/cynthiarempel/amazon-us-customer-reviews-dataset
 
 I chose this dataset because:
+
 - It has a star rating (1–5) that cleanly maps to sentiment labels without manual annotation
 - The `review_headline` field gives us ready-made reference summaries for T5 training
 - The reviews are real, messy, human-written text — not synthetically cleaned
@@ -60,11 +71,11 @@ I chose this dataset because:
 For a quick training run the README examples use 10,000 rows. The full dataset has millions of reviews across dozens of product categories.
 
 **Label mapping:**
-| Stars | Label     | Class ID |
+| Stars | Label | Class ID |
 |-------|-----------|----------|
-| 1–2   | Negative  | 0        |
-| 3     | Neutral   | 1        |
-| 4–5   | Positive  | 2        |
+| 1–2 | Negative | 0 |
+| 3 | Neutral | 1 |
+| 4–5 | Positive | 2 |
 
 ---
 
@@ -92,22 +103,22 @@ Fine-tuned `t5-small` for seq2seq on (review_body → review_headline) pairs:
 
 ### Sentiment (DistilBERT, 10k training samples)
 
-| Metric            | Value  |
-|-------------------|--------|
-| Accuracy          | ~0.84  |
-| Precision (macro) | ~0.82  |
-| Recall (macro)    | ~0.80  |
-| F1 (macro)        | ~0.81  |
+| Metric            | Value |
+| ----------------- | ----- |
+| Accuracy          | ~0.84 |
+| Precision (macro) | ~0.82 |
+| Recall (macro)    | ~0.80 |
+| F1 (macro)        | ~0.81 |
 
 > Actual values will vary based on your dataset subsample and hardware. Full numbers are written to `training/sentiment/results/test_metrics.txt` after running the evaluation script.
 
 ### Summarization (T5-small, 10k training samples)
 
-| Metric  | Value  |
-|---------|--------|
-| ROUGE-1 | ~0.31  |
-| ROUGE-2 | ~0.14  |
-| ROUGE-L | ~0.28  |
+| Metric  | Value |
+| ------- | ----- |
+| ROUGE-1 | ~0.31 |
+| ROUGE-2 | ~0.14 |
+| ROUGE-L | ~0.28 |
 
 > ROUGE scores for review summarization are generally lower than news summarization benchmarks — review headlines are much more subjective and varied than news headlines, so there's inherent ceiling on automatic metrics.
 
@@ -118,9 +129,11 @@ Fine-tuned `t5-small` for seq2seq on (review_body → review_headline) pairs:
 All endpoints are prefixed with `/api/`.
 
 ### GET /api/health
+
 ```bash
 curl http://localhost:5000/api/health
 ```
+
 ```json
 {
   "status": "ok",
@@ -134,11 +147,13 @@ curl http://localhost:5000/api/health
 ```
 
 ### POST /api/predict
+
 ```bash
 curl -X POST http://localhost:5000/api/predict \
   -H "Content-Type: application/json" \
   -d '{"text": "This product is excellent, works perfectly and arrived fast."}'
 ```
+
 ```json
 {
   "status": "ok",
@@ -146,20 +161,22 @@ curl -X POST http://localhost:5000/api/predict \
     "label": "Positive",
     "confidence": 0.9412,
     "scores": [
-      {"label": "Negative", "score": 0.0231},
-      {"label": "Neutral",  "score": 0.0357},
-      {"label": "Positive", "score": 0.9412}
+      { "label": "Negative", "score": 0.0231 },
+      { "label": "Neutral", "score": 0.0357 },
+      { "label": "Positive", "score": 0.9412 }
     ]
   }
 }
 ```
 
 ### POST /api/summarize
+
 ```bash
 curl -X POST http://localhost:5000/api/summarize \
   -H "Content-Type: application/json" \
   -d '{"text": "I bought this coffee maker three months ago and it has been an absolute game changer for my morning routine..."}'
 ```
+
 ```json
 {
   "status": "ok",
@@ -172,11 +189,13 @@ curl -X POST http://localhost:5000/api/summarize \
 ```
 
 ### POST /api/analyze
+
 ```bash
 curl -X POST http://localhost:5000/api/analyze \
   -H "Content-Type: application/json" \
   -d '{"text": "Your full review here..."}'
 ```
+
 Returns combined sentiment + summarization in a single response.
 
 ---
@@ -197,6 +216,7 @@ cp .env.example .env
 ### 2. Get the dataset
 
 Download from Kaggle (requires a free account):
+
 ```bash
 # Install Kaggle CLI
 pip install kaggle
@@ -294,6 +314,7 @@ python training/summarization/train_summarization.py \
 ```
 
 On a T4 GPU (Colab free tier), expect:
+
 - DistilBERT full dataset: ~2–3 hours
 - T5-small full dataset: ~4–6 hours
 
@@ -413,4 +434,4 @@ git push origin main
 
 ---
 
-*Built by a third-year CE student. Feedback welcome via GitHub issues.*
+_Built by a third-year CE student. Feedback welcome via GitHub issues._
