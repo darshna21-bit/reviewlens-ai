@@ -80,31 +80,6 @@ For summarization, review headlines were used as target summaries.
 
 ---
 
-## Model Architecture
-
-```text
-Amazon Review
-      │
-      ▼
- Flask REST API
-      │
- ┌─────────────┐
- │ DistilBERT  │
- └─────────────┘
-      │
- Sentiment + Confidence
-      │
- ┌─────────────┐
- │  T5-small   │
- └─────────────┘
-      │
- Generated Summary
-      ▼
-     UI
-```
-
----
-
 ## Model Performance
 
 ### Sentiment Classification
