@@ -28,6 +28,16 @@ class SummarizationService:
             raise RuntimeError("Summarization model is not loaded.")
 
         cleaned = clean_review_text(text)
+
+        # Strip introductory fluff (e.g., "I bought this last week") so the model
+        # doesn't copy generic first sentences and focuses on the actual review content.
+        sentences = [s.strip() for s in cleaned.split(".") if s.strip()]
+        if len(sentences) > 1:
+            first_sentence = sentences[0].lower()
+            fluff_words = ["ordered", "bought", "purchased", "received", "arrived", "shipping", "delivery"]
+            if any(w in first_sentence for w in fluff_words) and len(first_sentence.split()) < 10:
+                cleaned = ". ".join(sentences[1:]) + "."
+
         # T5's encoder can handle up to 512 tokens; truncating at word level
         # to stay safe
         truncated = truncate_text(cleaned, max_length=400)
