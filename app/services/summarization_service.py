@@ -1,4 +1,6 @@
 import logging
+import os
+import requests
 
 import torch
 
@@ -12,22 +14,54 @@ cfg = get_config()
 
 class SummarizationService:
     """
-    Wraps T5-small inference for abstractive summarization.
-
-    T5 is a seq2seq model so inference is more complex than classification —
-    we need to call generate() and then decode the output token ids.
+    Wraps summarization inference. Uses a hybrid approach:
+    1. Tries to call Hugging Face Serverless API with BART-large-cnn for state-of-the-art abstractive summaries.
+    2. Falls back to local T5-small model if the API is offline or rate-limited.
     """
 
-    # T5 was pretrained with task prefixes. Without "summarize: " the model
-    # sometimes just copies the input verbatim, which I confirmed empirically
-    # during early testing. The prefix activates the right decoder behavior.
     TASK_PREFIX = "summarize: "
 
     def summarize(self, text: str) -> dict:
+        cleaned = clean_review_text(text)
+        input_word_count = len(cleaned.split())
+
+        # 1. Try Hugging Face Serverless Inference API (BART-Large-CNN) for high-end abstractive summary
+        try:
+            token = os.getenv("HF_TOKEN")
+            headers = {"Authorization": f"Bearer {token}"} if token else {}
+            api_url = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
+            
+            payload = {
+                "inputs": cleaned,
+                "parameters": {
+                    "max_length": 45,
+                    "min_length": 10,
+                    "do_sample": False
+                }
+            }
+            
+            # Short timeout of 4 seconds so that if HF API is slow, we fall back instantly without latency
+            response = requests.post(api_url, headers=headers, json=payload, timeout=4)
+            
+            if response.status_code == 200:
+                result = response.json()
+                if isinstance(result, list) and len(result) > 0:
+                    summary = result[0].get("summary_text", "").strip()
+                    if summary:
+                        logger.info("Successfully generated summary via Hugging Face Inference API.")
+                        return {
+                            "summary": summary,
+                            "input_length": input_word_count,
+                            "summary_length": len(summary.split()),
+                        }
+            else:
+                logger.warning(f"Inference API returned status code {response.status_code}. Falling back to local model.")
+        except Exception as e:
+            logger.warning(f"Inference API failed: {e}. Falling back to local model.")
+
+        # 2. Local Fallback (Existing fine-tuned T5-small model)
         if not model_loader.summarization_ready:
             raise RuntimeError("Summarization model is not loaded.")
-
-        cleaned = clean_review_text(text)
 
         # Strip introductory fluff (e.g., "I bought this last week") so the model
         # doesn't copy generic first sentences and focuses on the actual review content.
