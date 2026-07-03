@@ -46,13 +46,25 @@ class SummarizationService:
         )
         inputs = {k: v.to(model_loader.device) for k, v in inputs.items()}
 
+        input_word_count = len(truncated.split())
+
+        # Refined parameters to ensure a true overall summary instead of sentence copying:
+        # 1. Neutralize length penalty (1.0) so the model doesn't bloat text to satisfy a length quota.
+        # 2. Set min_length to 6 for short/medium reviews, and 10 for longer reviews to prevent one-word summaries.
+        if input_word_count < 50:
+            gen_min_length = 6
+            gen_length_penalty = 1.0
+        else:
+            gen_min_length = 10
+            gen_length_penalty = 1.0
+
         with torch.no_grad():
             output_ids = model.generate(
                 **inputs,
                 max_new_tokens=cfg.SUMMARIZATION_MAX_NEW_TOKENS,
-                min_length=cfg.SUMMARIZATION_MIN_LENGTH,
+                min_length=gen_min_length,
                 num_beams=cfg.SUMMARIZATION_NUM_BEAMS,
-                length_penalty=cfg.SUMMARIZATION_LENGTH_PENALTY,
+                length_penalty=gen_length_penalty,
                 # early_stopping only makes sense with beam search
                 early_stopping=True,
                 # no_repeat_ngram_size=3 helped prevent the model from
