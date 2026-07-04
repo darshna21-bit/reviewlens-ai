@@ -55,20 +55,15 @@ def load_data(max_samples: int | None = None) -> tuple[Dataset, Dataset, Dataset
         df = pd.read_csv(PROCESSED_DIR / filename)
         df["review_body"] = df["review_body"].apply(clean_review_text)
 
-        # if we have review_headline, use it as the summary target
+        # Discard rows with empty or too-short headlines. 
+        # This ensures the model only learns abstractive summarization from human headlines,
+        # preventing the 'first-sentence copying' bias.
         if "review_headline" in df.columns:
             df["review_headline"] = df["review_headline"].fillna("")
-            df["summary_target"] = df.apply(
-                lambda row: clean_review_text(row["review_headline"])
-                if len(str(row["review_headline"]).strip()) > 5
-                else get_first_sentence(row["review_body"]),
-                axis=1,
-            )
+            df = df[df["review_headline"].str.strip().str.len() > 5]
+            df["summary_target"] = df["review_headline"].apply(clean_review_text)
         else:
-            # no headline column — use the first sentence as a weak proxy
-            # this is a degraded signal but still trains the model to compress
-            logger.warning("No review_headline column found, using first-sentence proxy targets.")
-            df["summary_target"] = df["review_body"].apply(get_first_sentence)
+            raise ValueError("The processed dataset splits must contain the review_headline column.")
 
         # filter out rows where the body is shorter than the summary — those
         # are data quality issues (e.g. "Great product" as the body)

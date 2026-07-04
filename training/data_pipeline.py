@@ -210,6 +210,29 @@ def split_and_save(df: pd.DataFrame):
     logger.info(f"\nProcessed data saved to {PROCESSED_DIR}/")
 
 
+def balance_classes(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Downsamples the dataset so that negative, neutral, and positive classes
+    have an equal number of samples, preventing training bias.
+    """
+    min_class_size = df["label"].value_counts().min()
+    logger.info(f"Balancing classes. Downsampling all classes to match smallest class size: {min_class_size:,}")
+    
+    balanced_df = (
+        df.groupby("label", group_keys=False)
+        .apply(lambda x: x.sample(min_class_size, random_state=42))
+        .reset_index(drop=True)
+    )
+    
+    logger.info("New balanced class distribution:")
+    dist = balanced_df["label"].value_counts().sort_index()
+    for label_id, count in dist.items():
+        pct = count / len(balanced_df) * 100
+        logger.info(f"  {LABEL_NAMES[label_id]:8s} (label {label_id}): {count:>7,} ({pct:.1f}%)")
+        
+    return balanced_df
+
+
 def run_pipeline(max_rows: int | None = None):
     logger.info("=" * 60)
     logger.info("ReviewLens AI — Data Pipeline")
@@ -220,6 +243,7 @@ def run_pipeline(max_rows: int | None = None):
     df = normalize_column_names(df)
     df = clean_and_filter(df)
     df = add_sentiment_labels(df)
+    df = balance_classes(df)
     log_text_stats(df)
     split_and_save(df)
 
