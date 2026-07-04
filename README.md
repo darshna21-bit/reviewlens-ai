@@ -1,16 +1,36 @@
+---
+title: ReviewLens AI
+emoji: 🔍
+colorFrom: green
+colorTo: gray
+sdk: docker
+pinned: false
+---
+
 # ReviewLens AI — Amazon Review Intelligence Platform
 
 [![HuggingFace Demo](https://img.shields.io/badge/🤗%20HuggingFace-Live%20Demo-yellow)](https://huggingface.co/spaces/Darshna21/reviewlens-ai)
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-black)](https://github.com/darshna21-bit/reviewlens-ai)
 [![Python](https://img.shields.io/badge/Python-3.10-blue)](https://python.org)
 
-An end-to-end NLP application that fine-tunes **DistilBERT** for sentiment analysis and **T5-small** for review summarization on Amazon customer reviews, deployed using **Flask, Docker, and Hugging Face Spaces**.
+An end-to-end NLP application that fine-tunes **DistilBERT** for sentiment classification and **FLAN-T5-base** for abstractive review summarization on Amazon customer reviews, deployed using **Flask, Docker, and Hugging Face Spaces**.
 
-### Key Achievement
-- Fine-tuned DistilBERT achieving **87.3% test accuracy**
-- Built a complete ML pipeline from training to deployment
-- Served predictions through a Flask REST API
-- Deployed publicly on Hugging Face Spaces using Docker
+### Key Achievements & Architecture
+- **Sentiment Classification (DistilBERT)**: Fine-tuned on 150k reviews, achieving **77.4% test accuracy & F1 Macro** on a highly robust, balanced dataset to prevent positive prediction bias.
+- **Abstractive Summarization (FLAN-T5-base)**: Upgraded from FLAN-T5-base to 220M-parameter FLAN-T5-base to utilize instruction-tuned linguistic baselines. Tuned generation parameters (`min_length=12`, `length_penalty=1.5`, `no_repeat_ngram_size=3`) to synthesize informative headlines that combine both strengths and weaknesses, successfully bypassing simple copy-paste behaviors.
+- **Decoupled Weights Deployment**: Optimized deployment storage by hosting model weights in a dedicated Hugging Face Model Hub repository, keeping the main container size lightweight and well below the 1GB Space limit.
+- **RESTful API Service**: Served predictions through a Flask API executing inference in under 2 seconds.
+
+## Premium UI & UX Enhancements
+
+We completely redesigned the frontend with a modern, responsive **Zinc Dark + Green Accent** dashboard loaded with interactive features:
+1. **📝 Smart AI Summary Card**: Displays beautifully structured, rounded-corner summary cards with modern typography and line-spacing.
+2. **🤖 Progress Checklist Loader**: Replaces generic loaders with a real-time, animated checklist showing step-by-step progress (*✓ Processing Sentiment* $\rightarrow$ *⏳ Generating Summary*).
+3. **🎯 Prediction Confidence Indicator**: Automatically maps probabilities to confidence levels (*Very High, High, Moderate, Low*) with color-coded badges.
+4. **⏱ API Execution Timer**: Real-time performance tracker measuring API round-trip duration in seconds.
+5. **🏷 Sentiment Keyword Highlights**: Scans reviews for positive, negative, or neutral words and renders them as colored badges (*Green for positive, Red for negative, Yellow for neutral*).
+6. **⚙ Model Information Footer Card**: Displays persistent technical metadata of models, backend, frontend, and libraries.
+7. **🤖 Interactive Empty State Placeholder**: Shows a clean welcome card before analysis to guide the user.
 
 ## Project Links
 
@@ -106,7 +126,7 @@ For summarization, review headlines were used as target summaries.
 | Component | Technology |
 |------------|------------|
 | Sentiment Analysis | DistilBERT |
-| Summarization | T5-small |
+| Summarization | FLAN-T5-base |
 | Framework | PyTorch, Transformers |
 | Backend | Flask |
 | Frontend | HTML, CSS, JavaScript |

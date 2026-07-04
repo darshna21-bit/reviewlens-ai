@@ -63,7 +63,11 @@
         <div class="loading-bars">
           <span></span><span></span><span></span><span></span><span></span>
         </div>
-        <p class="loading-text">Running inference<span class="loading-dots"></span></p>
+        <p class="loading-title">🤖 Analyzing Review...</p>
+        <div class="loading-steps">
+          <div class="loading-step" id="stepSentiment"><span class="step-icon">⏳</span> Processing Sentiment Analysis...</div>
+          <div class="loading-step" id="stepSummary"><span class="step-icon">⏳</span> Generating Summary...</div>
+        </div>
       </div>
     </div>
 
@@ -71,6 +75,21 @@
     <div class="error-panel" id="errorPanel" hidden>
       <div class="error-icon">⚠</div>
       <p class="error-message" id="errorMessage">Something went wrong.</p>
+    </div>
+
+    <!-- Empty State Placeholder -->
+    <div class="placeholder-card" id="emptyPlaceholder">
+      <div class="placeholder-icon">🤖</div>
+      <h3 class="placeholder-title">ReviewLens AI</h3>
+      <p class="placeholder-text">
+        Paste a product review above and click "Analyze Review".<br />
+        We'll predict the sentiment and generate an AI-powered summary.
+      </p>
+    </div>
+
+    <!-- Analysis Time Badge -->
+    <div class="analysis-meta-row" id="analysisMetaRow" hidden>
+      <span class="time-badge">⏱ Analysis Time: <span id="analysisTimeValue">0.00</span> seconds</span>
     </div>
 
     <!-- Results -->
@@ -82,9 +101,27 @@
           <span class="result-card-label">Sentiment</span>
           <div class="sentiment-badge" id="sentimentBadge">—</div>
         </div>
-        <div class="confidence-section">
-          <p class="confidence-heading">Confidence scores</p>
-          <div class="confidence-bars" id="confidenceBars">
+        
+        <div class="sentiment-layout-grid">
+          <div class="confidence-section">
+            <p class="confidence-heading">Confidence scores</p>
+            <div class="confidence-bars" id="confidenceBars">
+              <!-- populated by JS -->
+            </div>
+          </div>
+          
+          <!-- Confidence Indicator Card -->
+          <div class="confidence-indicator-card" id="confidenceIndicatorCard">
+            <p class="indicator-label">Prediction Confidence</p>
+            <p class="indicator-value" id="confidenceIndicatorValue">0.0%</p>
+            <span class="indicator-badge" id="confidenceIndicatorBadge">Low Confidence</span>
+          </div>
+        </div>
+
+        <!-- Highlight Keywords Section -->
+        <div class="keywords-section" id="keywordsSection" hidden>
+          <p class="keywords-heading">Highlight Keywords</p>
+          <div class="keywords-grid" id="keywordsGrid">
             <!-- populated by JS -->
           </div>
         </div>
@@ -93,10 +130,10 @@
       <!-- Summary card -->
       <div class="result-card" id="summaryCard">
         <div class="result-card-header">
-          <span class="result-card-label">Summary</span>
-          <span class="model-tag">T5-small</span>
+          <span class="result-card-label">📝 AI Summary</span>
+          <span class="model-tag">FLAN-T5-base</span>
         </div>
-        <p class="summary-text" id="summaryText">—</p>
+        <p class="summary-text" id="summaryText">Summary could not be generated.</p>
         <div class="summary-meta" id="summaryMeta"></div>
       </div>
 
@@ -118,11 +155,40 @@
       </button>
     </div>
   </section>
+
+  <!-- Model Information Card -->
+  <section class="model-info-section">
+    <div class="model-info-card">
+      <h4 class="info-title">⚙ Model Information</h4>
+      <div class="info-grid">
+        <div class="info-item">
+          <strong>Sentiment Model:</strong>
+          <span>DistilBERT</span>
+        </div>
+        <div class="info-item">
+          <strong>Summary Model:</strong>
+          <span>FLAN-T5-base</span>
+        </div>
+        <div class="info-item">
+          <strong>Backend:</strong>
+          <span>Flask</span>
+        </div>
+        <div class="info-item">
+          <strong>Frontend:</strong>
+          <span>HTML • CSS • JavaScript</span>
+        </div>
+        <div class="info-item">
+          <strong>Libraries:</strong>
+          <span>Transformers • PyTorch</span>
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
 
 <footer class="site-footer">
   <div class="footer-inner">
-    <span>ReviewLens AI — Built with DistilBERT &amp; T5-small</span>
+    <span>ReviewLens AI — Built with DistilBERT &amp; FLAN-T5-base</span>
     <span class="footer-sep">·</span>
     <a href="https://github.com" target="_blank" rel="noopener" class="footer-link">GitHub</a>
     <span class="footer-sep">·</span>

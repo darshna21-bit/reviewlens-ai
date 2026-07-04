@@ -15,19 +15,6 @@ logger = logging.getLogger(__name__)
 
 
 class ModelLoader:
-    """
-    Singleton-ish model registry. The pattern here is: load everything once
-    at app startup, hold references, serve them to services on demand.
-
-    I initially had the services load their own models but that caused ~3s
-    latency on the first request to each endpoint. Moving to startup loading
-    makes the first request fast and keeps RAM usage predictable.
-
-    On Render's free tier (512MB RAM) this is tight with both models loaded.
-    If memory becomes an issue, the summarization model can be lazy-loaded
-    since it's less commonly hit than sentiment.
-    """
-
     def __init__(self):
         self._sentiment_model = None
         self._sentiment_tokenizer = None
@@ -40,7 +27,6 @@ class ModelLoader:
     @property
     def device(self):
         if self._device is None:
-            # MPS check for Apple Silicon — useful during local dev on M1/M2
             if torch.cuda.is_available():
                 self._device = torch.device("cuda")
             elif torch.backends.mps.is_available():
@@ -50,19 +36,12 @@ class ModelLoader:
             logger.info(f"Using device: {self._device}")
         return self._device
 
-    def load_sentiment_model(self, model_path: str) -> bool:
-        """
-        Loads DistilBERT from a local checkpoint directory.
-        Returns True on success so the app can flag which models are available.
-        """
+    def _is_hub_path(self, model_path: str) -> bool:
+        """Check karo - Hub ID hai ya local path"""
         path = Path(model_path)
-        if not path.exists():
-            logger.warning(
-                f"Sentiment model path {model_path} doesn't exist. "
-                "Sentiment endpoints will return 503 until the model is trained."
-            )
-            return False
+        return not path.exists()
 
+    def load_sentiment_model(self, model_path: str) -> bool:
         try:
             logger.info(f"Loading sentiment model from {model_path}...")
             self._sentiment_tokenizer = DistilBertTokenizerFast.from_pretrained(model_path)
@@ -70,7 +49,7 @@ class ModelLoader:
                 model_path
             )
             self._sentiment_model.to(self.device)
-            self._sentiment_model.eval()  # disables dropout — matters for consistent inference
+            self._sentiment_model.eval()
             self._sentiment_loaded = True
             logger.info("Sentiment model loaded successfully.")
             return True
@@ -79,17 +58,8 @@ class ModelLoader:
             return False
 
     def load_summarization_model(self, model_path: str) -> bool:
-        path = Path(model_path)
-        if not path.exists():
-            logger.warning(
-                f"Summarization model path {model_path} doesn't exist. "
-                "Summarization endpoints will return 503 until the model is trained."
-            )
-            return False
-
         try:
             logger.info(f"Loading summarization model from {model_path}...")
-            # T5TokenizerFast needs sentencepiece — make sure it's installed
             self._summarization_tokenizer = T5TokenizerFast.from_pretrained(model_path)
             self._summarization_model = T5ForConditionalGeneration.from_pretrained(
                 model_path

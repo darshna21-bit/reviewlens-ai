@@ -626,6 +626,268 @@ body::before {
 
 #errorPanel[hidden],
 #resultsPanel[hidden],
-#loadingPanel[hidden] {
+#loadingPanel[hidden],
+#emptyPlaceholder[hidden],
+#analysisMetaRow[hidden],
+#keywordsSection[hidden] {
   display: none !important;
 }
+
+/* ── Placeholder Card (Empty State) ── */
+.placeholder-card {
+  background: var(--bg-surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  padding: 40px 24px;
+  text-align: center;
+  margin-top: 16px;
+  animation: fade-up 0.3s ease-out both;
+}
+
+.placeholder-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+  opacity: 0.8;
+}
+
+.placeholder-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.placeholder-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ── Loading Steps Checklist ── */
+.loading-steps {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 280px;
+  text-align: left;
+}
+
+.loading-step {
+  font-size: 12px;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color var(--transition);
+}
+
+.loading-step.pending {
+  color: var(--text-muted);
+}
+
+.step-icon {
+  display: inline-block;
+  min-width: 16px;
+}
+
+/* ── Analysis Timer Badge ── */
+.analysis-meta-row {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.time-badge {
+  font-size: 11px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Sentiment Layout Grid ── */
+.sentiment-layout-grid {
+  display: grid;
+  grid-template-columns: 1fr 120px;
+  gap: 16px;
+  align-items: center;
+}
+
+@media (max-width: 500px) {
+  .sentiment-layout-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Confidence Indicator Card ── */
+.confidence-indicator-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+}
+
+.indicator-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.indicator-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.indicator-badge {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.indicator-badge.very-high {
+  background: rgba(0, 200, 83, 0.15);
+  color: var(--positive);
+}
+
+.indicator-badge.high {
+  background: rgba(0, 200, 83, 0.08);
+  color: var(--positive);
+  opacity: 0.95;
+}
+
+.indicator-badge.moderate {
+  background: rgba(255, 214, 0, 0.15);
+  color: var(--neutral);
+}
+
+.indicator-badge.low {
+  background: rgba(255, 23, 68, 0.15);
+  color: var(--negative);
+}
+
+/* ── Highlight Keywords Section ── */
+.keywords-section {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.keywords-heading {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+
+.keywords-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.keyword-badge {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+
+.keyword-badge.positive {
+  background: rgba(0, 200, 83, 0.12);
+  color: var(--positive);
+  border: 1px solid rgba(0, 200, 83, 0.15);
+}
+
+.keyword-badge.negative {
+  background: rgba(255, 23, 68, 0.12);
+  color: var(--negative);
+  border: 1px solid rgba(255, 23, 68, 0.15);
+}
+
+.keyword-badge.neutral {
+  background: rgba(255, 214, 0, 0.12);
+  color: var(--neutral);
+  border: 1px solid rgba(255, 214, 0, 0.15);
+}
+
+/* ── Model Info Section ── */
+.model-info-section {
+  margin-top: 48px;
+}
+
+.model-info-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+}
+
+.info-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+}
+
+.info-item strong {
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 9px;
+  letter-spacing: 0.05em;
+}
+
+.info-item span {
+  color: var(--text-secondary);
+}
+
+/* ── Improved Summary Card Style (Item 18) ── */
+#summaryCard {
+  border: 1px solid rgba(0, 200, 83, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(135deg, var(--bg-surface) 0%, rgba(24, 24, 24, 0.95) 100%);
+  padding: 24px;
+}
+
+#summaryCard .summary-text {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #ffffff;
+  font-family: system-ui, -apple-system, sans-serif;
+  letter-spacing: 0.01em;
+  padding: 6px 0;
+  word-wrap: break-word;
+}
