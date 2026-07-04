@@ -47,7 +47,13 @@ class AnalysisController:
             return {"error": error_msg}, 400
 
         try:
-            result = summarization_service.summarize(text)
+            sentiment_label = None
+            try:
+                sentiment_res = sentiment_service.predict(text)
+                sentiment_label = sentiment_res.get("label")
+            except Exception:
+                pass
+            result = summarization_service.summarize(text, sentiment=sentiment_label)
             return {"status": "ok", "result": result}, 200
         except RuntimeError as e:
             logger.warning(f"Summarization service unavailable: {e}")
@@ -84,7 +90,10 @@ class AnalysisController:
         # summarization — only meaningful for longer texts
         if len(text.split()) >= 20:
             try:
-                summary_result = summarization_service.summarize(text)
+                sentiment_label = None
+                if "sentiment" in response["result"] and "error" not in response["result"]["sentiment"]:
+                    sentiment_label = response["result"]["sentiment"].get("label")
+                summary_result = summarization_service.summarize(text, sentiment=sentiment_label)
                 response["result"]["summarization"] = summary_result
             except RuntimeError as e:
                 response["result"]["summarization"] = {"error": str(e)}

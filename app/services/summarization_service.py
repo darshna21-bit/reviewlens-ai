@@ -18,14 +18,23 @@ class SummarizationService:
 
     TASK_PREFIX = "summarize: "
 
-    def summarize(self, text: str) -> dict:
+    def summarize(self, text: str, sentiment: str = None) -> dict:
         if not model_loader.summarization_ready:
             raise RuntimeError("Summarization model is not loaded.")
 
         cleaned = clean_review_text(text)
         truncated = truncate_text(cleaned, max_length=400)
 
-        prefixed = self.TASK_PREFIX + truncated
+        # Sentiment-Aware Prompting (Option 1) to bypass training bias
+        prefix = self.TASK_PREFIX
+        if sentiment == "Neutral":
+            prefix = "summarize neutral review: "
+        elif sentiment == "Positive":
+            prefix = "summarize positive review: "
+        elif sentiment == "Negative":
+            prefix = "summarize negative review: "
+
+        prefixed = prefix + truncated
 
         tokenizer = model_loader.summarization_tokenizer
         model = model_loader.summarization_model
