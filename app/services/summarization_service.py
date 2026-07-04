@@ -42,10 +42,10 @@ class SummarizationService:
         input_word_count = len(truncated.split())
 
         # Clean, optimized generation parameters for your fine-tuned model:
-        # We set min_length to 12 and length_penalty to 1.5 based on parameter tuning
-        # to ensure the model captures both positive and negative aspects and avoids generic titles.
-        gen_min_length = 12
-        gen_length_penalty = 1.5
+        # We set min_length to 6 and length_penalty to 1.0 to allow concise, natural summaries
+        # and prevent the model from overshooting, which causes word repetition and hallucinations.
+        gen_min_length = 6
+        gen_length_penalty = 1.0
 
         with torch.no_grad():
             output_ids = model.generate(
