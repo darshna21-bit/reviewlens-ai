@@ -51,20 +51,25 @@ class SummarizationService:
         input_word_count = len(truncated.split())
 
         # Clean, optimized generation parameters for your fine-tuned model:
-        # We set min_length to 8 and length_penalty to 1.2 with repetition_penalty to 1.2
-        # to ensure descriptive summaries without word repetitions or hallucinations.
         gen_min_length = 8
         gen_length_penalty = 1.2
+        gen_num_beams = cfg.SUMMARIZATION_NUM_BEAMS
+
+        # Option 2: Greedy decoding for neutral reviews to avoid template bias
+        if sentiment == "Neutral":
+            gen_num_beams = 1
+            gen_min_length = 6
+            gen_length_penalty = 1.0
 
         with torch.no_grad():
             output_ids = model.generate(
                 **inputs,
                 max_new_tokens=cfg.SUMMARIZATION_MAX_NEW_TOKENS,
                 min_length=gen_min_length,
-                num_beams=cfg.SUMMARIZATION_NUM_BEAMS,
+                num_beams=gen_num_beams,
                 length_penalty=gen_length_penalty,
                 repetition_penalty=1.2,
-                early_stopping=True,
+                early_stopping=True if gen_num_beams > 1 else False,
                 no_repeat_ngram_size=3,
             )
 
