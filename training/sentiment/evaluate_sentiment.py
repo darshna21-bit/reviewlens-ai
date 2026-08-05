@@ -16,10 +16,14 @@ import seaborn as sns
 import torch
 from sklearn.metrics import (
     accuracy_score,
+    auc,
     classification_report,
     confusion_matrix,
+    precision_recall_curve,
     precision_recall_fscore_support,
+    roc_curve,
 )
+from sklearn.preprocessing import label_binarize
 from transformers import DistilBertForSequenceClassification, DistilBertTokenizerFast
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -132,6 +136,71 @@ def run_evaluation():
     plt.savefig(cm_path, dpi=150, bbox_inches="tight")
     plt.close()
     logger.info(f"\nConfusion matrix saved to {cm_path}")
+
+    # ── ROC-AUC & Precision-Recall Curves ─────────────────────────────────────
+    # A second inference pass is needed to collect softmax probabilities
+    # (the first pass only kept argmax predictions for the confusion matrix)
+    logger.info("Computing ROC-AUC and Precision-Recall curves...")
+
+    all_probs = []
+    for start in range(0, len(test_df), batch_size):
+        batch_texts = test_df["review_body"].iloc[start : start + batch_size].tolist()
+        inputs = tokenizer(
+            batch_texts,
+            return_tensors="pt",
+            truncation=True,
+            max_length=512,
+            padding=True,
+        )
+        inputs = {k: v.to(device) for k, v in inputs.items()}
+        with torch.no_grad():
+            outputs = model(**inputs)
+        probs = torch.softmax(outputs.logits, dim=-1).cpu().numpy()
+        all_probs.extend(probs.tolist())
+
+    all_probs = np.array(all_probs)
+    # Binarize true labels for one-vs-rest multi-class ROC/PR evaluation
+    true_bin = label_binarize(true_labels, classes=[0, 1, 2])
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+    fig.suptitle("DistilBERT Sentiment — ROC-AUC & Precision-Recall Curves", fontsize=14)
+
+    colors = ["#e74c3c", "#f39c12", "#2ecc71"]
+    for i, (label_name, color) in enumerate(zip(LABEL_NAMES, colors)):
+        # ROC Curve
+        fpr, tpr, _ = roc_curve(true_bin[:, i], all_probs[:, i])
+        roc_auc = auc(fpr, tpr)
+        axes[0].plot(fpr, tpr, color=color, lw=2,
+                     label=f"{label_name} (AUC = {roc_auc:.2f})")
+
+        # Precision-Recall Curve
+        precision_vals, recall_vals, _ = precision_recall_curve(
+            true_bin[:, i], all_probs[:, i]
+        )
+        axes[1].plot(recall_vals, precision_vals, color=color, lw=2, label=label_name)
+
+    # ROC plot formatting
+    axes[0].plot([0, 1], [0, 1], "k--", lw=1, label="Random classifier")
+    axes[0].set_xlim([0.0, 1.0])
+    axes[0].set_ylim([0.0, 1.05])
+    axes[0].set_xlabel("False Positive Rate")
+    axes[0].set_ylabel("True Positive Rate")
+    axes[0].set_title("ROC-AUC Curve (One-vs-Rest)")
+    axes[0].legend(loc="lower right", fontsize=9)
+
+    # PR plot formatting
+    axes[1].set_xlim([0.0, 1.0])
+    axes[1].set_ylim([0.0, 1.05])
+    axes[1].set_xlabel("Recall")
+    axes[1].set_ylabel("Precision")
+    axes[1].set_title("Precision-Recall Curve (One-vs-Rest)")
+    axes[1].legend(loc="upper right", fontsize=9)
+
+    plt.tight_layout()
+    roc_path = RESULTS_DIR / "roc_pr_curves.png"
+    plt.savefig(roc_path, dpi=150, bbox_inches="tight")
+    plt.close()
+    logger.info(f"ROC-AUC and Precision-Recall curves saved to {roc_path}")
 
     # save text metrics
     metrics_path = RESULTS_DIR / "test_metrics.txt"
