@@ -1,0 +1,533 @@
+{
+  "info": {
+    "_postman_id": "reviewlens-ai-collection-v1",
+    "name": "ReviewLens AI — API Test Collection",
+    "description": "Automated API tests for ReviewLens AI Flask REST API.\nIncludes valid and edge-case requests for all 4 endpoints.\nImport this file into Postman and set the base_url variable to http://127.0.0.1:5000 for local testing.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:5000",
+      "type": "string",
+      "description": "Base URL of the ReviewLens AI server. Change to your deployed URL for production testing."
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /api/health — Should return 200 with model status",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Health check endpoint. Returns status 'ok', timestamp, and model load status."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// 1. Status code",
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// 2. Response time",
+                  "pm.test('Response time is under 500ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "// 3. JSON body schema",
+                  "pm.test('Response has required top-level keys', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('status');",
+                  "    pm.expect(jsonData).to.have.property('timestamp');",
+                  "    pm.expect(jsonData).to.have.property('models');",
+                  "});",
+                  "",
+                  "// 4. Status value",
+                  "pm.test('Status value is ok', function () {",
+                  "    pm.expect(pm.response.json().status).to.eql('ok');",
+                  "});",
+                  "",
+                  "// 5. Models sub-keys",
+                  "pm.test('Models object has sentiment_model and summarization_model keys', function () {",
+                  "    const models = pm.response.json().models;",
+                  "    pm.expect(models).to.have.property('sentiment_model');",
+                  "    pm.expect(models).to.have.property('summarization_model');",
+                  "    pm.expect(models).to.have.property('device');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Predict (Sentiment)",
+      "item": [
+        {
+          "name": "POST /api/predict — Valid positive review",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/predict",
+              "host": ["{{base_url}}"],
+              "path": ["api", "predict"]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"This product completely exceeded my expectations. The build quality is exceptional and it works exactly as advertised. Would definitely buy again and highly recommend to anyone looking for a reliable option.\"\n}"
+            },
+            "description": "Valid positive review — expects 200 with sentiment, confidence, and scores."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 or 503 (model may not be loaded)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 503]);",
+                  "});",
+                  "",
+                  "pm.test('Response time is under 5000ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test('Response has status ok', function () {",
+                  "        pm.expect(pm.response.json().status).to.eql('ok');",
+                  "    });",
+                  "",
+                  "    pm.test('Result has label, confidence, and scores', function () {",
+                  "        const result = pm.response.json().result;",
+                  "        pm.expect(result).to.have.property('label');",
+                  "        pm.expect(result).to.have.property('confidence');",
+                  "        pm.expect(result).to.have.property('scores');",
+                  "    });",
+                  "",
+                  "    pm.test('Label is one of Positive, Neutral, Negative', function () {",
+                  "        const label = pm.response.json().result.label;",
+                  "        pm.expect(['Positive', 'Neutral', 'Negative']).to.include(label);",
+                  "    });",
+                  "",
+                  "    pm.test('Scores array has 3 entries', function () {",
+                  "        pm.expect(pm.response.json().result.scores).to.have.lengthOf(3);",
+                  "    });",
+                  "",
+                  "    pm.test('Confidence is between 0 and 1', function () {",
+                  "        const conf = pm.response.json().result.confidence;",
+                  "        pm.expect(conf).to.be.within(0, 1);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/predict — Empty text (should return 400)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/predict",
+              "host": ["{{base_url}}"],
+              "path": ["api", "predict"]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"\"\n}"
+            },
+            "description": "Edge case — empty text string. Should return 400 Bad Request."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400 for empty text', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response time is under 500ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('Error key is present in response', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/predict — No body (should return 400)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/predict",
+              "host": ["{{base_url}}"],
+              "path": ["api", "predict"]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "description": "Edge case — no request body at all. Should return 400."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400 for missing body', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response time is under 500ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/predict — Too short text (should return 400)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/predict",
+              "host": ["{{base_url}}"],
+              "path": ["api", "predict"]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"ok\"\n}"
+            },
+            "description": "Edge case — text shorter than minimum 10 characters. Should return 400."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400 for too-short text', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Error message is present', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Summarize",
+      "item": [
+        {
+          "name": "POST /api/summarize — Valid long review",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/summarize",
+              "host": ["{{base_url}}"],
+              "path": ["api", "summarize"]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"I bought these wireless headphones last week and they have been absolutely amazing. The sound quality is incredibly crisp, the bass is deep, and the battery life easily lasts for over 30 hours of continuous use. They are also extremely comfortable to wear for long working hours. I highly recommend them to anyone looking for premium headphones at a reasonable price.\"\n}"
+            },
+            "description": "Valid review long enough for summarization (>50 chars). Expects 200 with summary."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 or 503 (model may not be loaded)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 503]);",
+                  "});",
+                  "",
+                  "pm.test('Response time is under 10000ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(10000);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test('Result has summary, input_length, summary_length', function () {",
+                  "        const result = pm.response.json().result;",
+                  "        pm.expect(result).to.have.property('summary');",
+                  "        pm.expect(result).to.have.property('input_length');",
+                  "        pm.expect(result).to.have.property('summary_length');",
+                  "    });",
+                  "",
+                  "    pm.test('Summary is a non-empty string', function () {",
+                  "        const summary = pm.response.json().result.summary;",
+                  "        pm.expect(summary).to.be.a('string').and.to.have.length.above(0);",
+                  "    });",
+                  "",
+                  "    pm.test('Summary is shorter than input', function () {",
+                  "        const result = pm.response.json().result;",
+                  "        pm.expect(result.summary_length).to.be.below(result.input_length);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/summarize — Too short text (should return 400)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/summarize",
+              "host": ["{{base_url}}"],
+              "path": ["api", "summarize"]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"This is short.\"\n}"
+            },
+            "description": "Edge case — text shorter than 50 chars minimum for summarization. Expects 400."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400 for text too short to summarize', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response time is under 500ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('Error key is present', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/summarize — Wrong JSON key (should return 400)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/summarize",
+              "host": ["{{base_url}}"],
+              "path": ["api", "summarize"]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"review\": \"This is some text sent with the wrong key name.\"\n}"
+            },
+            "description": "Edge case — valid JSON but wrong key ('review' instead of 'text'). Expects 400."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400 for wrong JSON key', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Error key is present', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Analyze (Combined)",
+      "item": [
+        {
+          "name": "POST /api/analyze — Valid review (combined sentiment + summary)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/analyze",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analyze"]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"This toaster is a total waste of money. The build quality feels very cheap and flimsy. It stopped working after only three days of use, and when it did work, it burnt my toast on one side while leaving the other side completely raw. Customer support has been unresponsive. I do not recommend this product at all.\"\n}"
+            },
+            "description": "Valid review — expects combined result with both sentiment and summarization keys."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response time is under 10000ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(10000);",
+                  "});",
+                  "",
+                  "pm.test('Top-level status is ok or partial', function () {",
+                  "    const status = pm.response.json().status;",
+                  "    pm.expect(['ok', 'partial']).to.include(status);",
+                  "});",
+                  "",
+                  "pm.test('Result has sentiment key', function () {",
+                  "    pm.expect(pm.response.json().result).to.have.property('sentiment');",
+                  "});",
+                  "",
+                  "pm.test('Result has summarization key', function () {",
+                  "    pm.expect(pm.response.json().result).to.have.property('summarization');",
+                  "});",
+                  "",
+                  "const sentiment = pm.response.json().result.sentiment;",
+                  "if (sentiment && !sentiment.error) {",
+                  "    pm.test('Sentiment label is valid', function () {",
+                  "        pm.expect(['Positive', 'Neutral', 'Negative']).to.include(sentiment.label);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/analyze — Short text (summarization should be skipped)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/analyze",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analyze"]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"This product is really good and I like it very much.\"\n}"
+            },
+            "description": "Short text (<20 words) — summarization should be skipped, but sentiment still runs."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response time is under 5000ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "});",
+                  "",
+                  "const result = pm.response.json().result;",
+                  "if (result.summarization) {",
+                  "    pm.test('Summarization is skipped for short text', function () {",
+                  "        const isSkipped = result.summarization.skipped === true;",
+                  "        const hasError = 'error' in result.summarization;",
+                  "        pm.expect(isSkipped || hasError).to.be.true;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/analyze — No body (should return 400)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/analyze",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analyze"]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "description": "Edge case — no request body. Expects 400."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400 for missing body', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response time is under 500ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

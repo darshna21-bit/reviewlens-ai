@@ -1,0 +1,55 @@
+name: CI — ReviewLens AI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    name: Run Pytest + Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout ───────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Python setup ───────────────────────────────────────────────────────
+      # Pin to 3.11 — scikit-learn 1.5.0 has pre-built wheels for 3.11.
+      # Python 3.14 (local laptop) requires building from source which fails
+      # due to missing Cython/Meson dev headers on bare Ubuntu runners.
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      # ── 3. Install runtime dependencies ──────────────────────────────────────
+      - name: Install project dependencies
+        run: pip install -r requirements.txt
+
+      # ── 4. Install test/dev dependencies ─────────────────────────────────────
+      # Kept separate from requirements.txt — these are dev-only tools that
+      # don't belong in the production Docker image.
+      - name: Install test dependencies
+        run: pip install pytest pytest-flask pytest-cov
+
+      # ── 5. Run tests with coverage ────────────────────────────────────────────
+      - name: Run pytest with coverage
+        run: |
+          pytest \
+            --cov=app \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml \
+            -v
+
+      # ── 6. Upload coverage artifact ───────────────────────────────────────────
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage.xml
+          retention-days: 7
